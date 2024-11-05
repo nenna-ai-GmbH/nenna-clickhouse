@@ -10,3 +10,7 @@ init: ## Create docker-compose shared network
 
 run: ## Run clickhouse
 	docker compose up -d
+
+tf-apply: ## Apply terraform
+	cd staging && terraform apply -auto-approve
+	ssh-keygen -R 157.90.24.158
