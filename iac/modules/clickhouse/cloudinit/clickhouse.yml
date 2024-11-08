@@ -1,12 +1,59 @@
+write_files:
+  - path: /run/scripts/install-clickhouse.sh
+    content: |
+      LATEST_VERSION=$(curl -s https://raw.githubusercontent.com/ClickHouse/ClickHouse/master/utils/list-versions/version_date.tsv | \
+          grep -Eo '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | sort -V -r | head -n 1)
+      export LATEST_VERSION
+
+      case $(uname -m) in
+        x86_64) ARCH=amd64 ;;
+        aarch64) ARCH=arm64 ;;
+        *) echo "Unknown architecture $(uname -m)"; exit 1 ;;
+      esac
+
+      for PKG in clickhouse-common-static clickhouse-common-static-dbg clickhouse-server clickhouse-client clickhouse-keeper
+      do
+        curl -fO "https://packages.clickhouse.com/tgz/stable/$PKG-$LATEST_VERSION-${ARCH}.tgz" \
+          || curl -fO "https://packages.clickhouse.com/tgz/stable/$PKG-$LATEST_VERSION.tgz"
+      done
+
+      tar -xzvf "clickhouse-common-static-$LATEST_VERSION-${ARCH}.tgz" \
+        || tar -xzvf "clickhouse-common-static-$LATEST_VERSION.tgz"
+      sudo "clickhouse-common-static-$LATEST_VERSION/install/doinst.sh"
+
+      tar -xzvf "clickhouse-common-static-dbg-$LATEST_VERSION-${ARCH}.tgz" \
+        || tar -xzvf "clickhouse-common-static-dbg-$LATEST_VERSION.tgz"
+      sudo "clickhouse-common-static-dbg-$LATEST_VERSION/install/doinst.sh"
+
+      tar -xzvf "clickhouse-server-$LATEST_VERSION-${ARCH}.tgz" \
+        || tar -xzvf "clickhouse-server-$LATEST_VERSION.tgz"
+      sudo "clickhouse-server-$LATEST_VERSION/install/doinst.sh" configure
+      sudo /etc/init.d/clickhouse-server start
+
+      tar -xzvf "clickhouse-client-$LATEST_VERSION-${ARCH}.tgz" \
+        || tar -xzvf "clickhouse-client-$LATEST_VERSION.tgz"
+      sudo "clickhouse-client-$LATEST_VERSION/install/doinst.sh"
+    permissions: "0755"
+
+  - path: /run/scripts/configure-clickhouse.sh
+    content: |
+      sudo mkdir -p /var/lib/clickhouse
+      sudo mkdir -p /var/log/clickhouse-server
+      sudo chown clickhouse:clickhouse /var/lib/clickhouse
+      sudo chown clickhouse:clickhouse /var/log/clickhouse-server
+      sudo chmod 750 /var/lib/clickhouse
+      sudo chmod 750 /var/log/clickhouse-server
+    permissions: "0755"
+
+  - path: /etc/clickhouse-server/config.d/networking.xml
+    content: |
+      <network>
+        <listen_host>0.0.0.0</listen_host>
+      </network>
+    permissions: "0644"
+
 runcmd:
-  - sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
-  - curl -fsSL 'https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key' | sudo gpg --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg
-  - echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main" | sudo tee \
-    /etc/apt/sources.list.d/clickhouse.list
-  - sudo apt-get update
-  - sudo apt-get install -y clickhouse-server clickhouse-client
+  - [sh, "/run/scripts/install-clickhouse.sh"]
+  - [sh, "/run/scripts/configure-clickhouse.sh"]
   - sudo service clickhouse-server start
-  - sudo mkdir /var/lib/clickhouse
-  - sudo chown clickhouse:clickhouse /var/lib/clickhouse
-  - sudo chmod 750 /var/lib/clickhouse
   - clickhouse-client # or "clickhouse-client --password" if you've set up a password.
