@@ -1,0 +1,52 @@
+service: nenna-clickhouse
+
+image: nenna-ai-gmbh/nenna-clickhouse
+
+# https://kamal-deploy.org/docs/configuration#using-different-roles-for-servers
+servers:
+  clickhouse:
+    hosts:
+      - 157.90.24.158
+
+# # https://kamal-deploy.org/docs/configuration#using-a-custom-healthcheck
+# healthcheck:
+#   path: /latest/health
+#   port: 8000
+#   max_attempts: 15
+#   interval: 20s
+
+# To use a non-root user see https://kamal-deploy.org/docs/configuration#using-a-different-ssh-user-than-root
+ssh:
+  user: kamal
+
+# https://kamal-deploy.org/docs/configuration#using-a-different-dockerfile-or-context-when-building
+# Set multiarch to false for better performance if you are building your image on the same architecture as your server
+builder:
+  multiarch: true
+  # dockerfile: "../Dockerfile.web"
+  context: "../"
+
+# See https://kamal-deploy.org/docs/configuration#using-another-registry-than-docker-hub
+# TODO: Add service user for ghcr.io
+registry:
+  server: ghcr.io
+  username: fugufisch
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+accessories:
+  clickhouse:
+    image: clickhouse/clickhouse-server
+    host: 157.90.24.158
+    options:
+      network: nenna-clickhouse-network
+    port:
+      # - 9000:9000 # Native Port
+      8123:8123 # HTTP Port
+    env:
+      clear:
+        CLICKHOUSE_HOST: clickhouse-docker-server
+        CLICKHOUSE_PORT: 8123
+        CLICKHOUSE_USERNAME: default
+      secret:
+        - CLICKHOUSE_PASSWORD
