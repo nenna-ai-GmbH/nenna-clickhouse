@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS event_masking (
     endpoint Enum('filter' = 1, 'filter_binary' = 2) DEFAULT 'filter',
     filtered_by_policy_id Nullable(String),
     event_trigger Enum('masking' = 1, 'de_masking' = 2, 'send' = 3),
-    user_input String,
+    user_input Nullable(String),
     total_detections UInt32 DEFAULT 0,
     detections_per_type Map(String, UInt32)
 ) ENGINE = MergeTree()
