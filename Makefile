@@ -19,6 +19,8 @@ create-tables: ## Create ClickHouse tables
 run: ## Run clickhouse
 	docker compose up -d
 
+start: run ## Alias to run
+
 tf-apply: ## Apply terraform
 	cd staging && terraform apply -auto-approve
 	ssh-keygen -R 157.90.24.158
