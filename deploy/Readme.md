@@ -8,21 +8,6 @@ This guide explains the deployment steps for both production and staging environ
 2. Make sure you have the necessary access rights and SSH keys set up for the target servers.
 3. Verify that the infrastructure is properly set up using the Terraform configurations in the `iac` directory.
 
-## Setup for New Environments
-
-If you're setting up a new environment:
-
-1. Create a new configuration file for your environment (e.g., `config/deploy/new_environment.rb`).
-2. Define the necessary settings in this file, including server addresses, environment variables, and any environment-specific configurations.
-3. Update your `config/deploy.rb` file to include the new environment if necessary.
-4. Run the Kamal setup command for the new environment:
-
-   ```
-   kamal setup -d new_environment
-   ```
-
-   This command will prepare the servers for deployment, installing necessary dependencies and setting up the initial configuration.
-
 ## Deployment Steps
 
 ### For Staging
@@ -56,6 +41,7 @@ If you're setting up a new environment:
 If you need to roll back to a previous version:
 
 1. For staging:
+
    ```
    kamal rollback -d staging
    ```
@@ -70,6 +56,7 @@ If you need to roll back to a previous version:
 To check the status of your deployment:
 
 1. For staging:
+
    ```
    kamal status -d staging
    ```
@@ -86,6 +73,3 @@ To check the status of your deployment:
 - Regularly update and maintain your Kamal configuration files to reflect any changes in your infrastructure or deployment process.
 
 For more detailed information on Kamal commands and options, refer to the official Kamal documentation.
-
-
-

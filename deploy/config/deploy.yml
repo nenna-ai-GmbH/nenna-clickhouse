@@ -3,7 +3,7 @@ service: nenna-clickhouse
 image: nenna-ai-gmbh/nenna-clickhouse
 
 servers:
-  clickhouse:
+  web:
     hosts:
       - 157.90.24.158
 
