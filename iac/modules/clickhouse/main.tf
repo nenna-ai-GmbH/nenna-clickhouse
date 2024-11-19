@@ -14,8 +14,9 @@ resource "hcloud_server" "clickhouse" {
   location    = var.region
   keep_disk   = true
   labels = {
-    "ssh"  = "yes",
-    "http" = "yes"
+    "ssh"     = "yes"
+    "http"    = "yes"
+    "rebuilt" = replace(substr(timestamp(), 0, 10), "-", "")
   }
 
   user_data = data.cloudinit_config.cloud_config_clickhouse.rendered
@@ -43,6 +44,11 @@ data "cloudinit_config" "cloud_config_clickhouse" {
 
   part {
     content_type = "text/cloud-config"
-    content      = file("${path.module}/cloudinit/clickhouse.yml")
+    content      = file("${path.module}/cloudinit/clickhouse_install.yml")
+  }
+
+  part {
+    content_type = "text/cloud-config"
+    content      = file("${path.module}/cloudinit/clickhouse_config.yml")
   }
 }
