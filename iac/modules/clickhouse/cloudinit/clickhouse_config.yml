@@ -69,3 +69,6 @@ write_files:
           </quotas>
       </clickhouse>
     permissions: "0644"
+
+runcmd:
+  - echo "ClickHouse is ready"
