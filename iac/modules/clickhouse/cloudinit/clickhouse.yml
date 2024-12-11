@@ -112,6 +112,9 @@ write_files:
         echo "Waiting for ClickHouse to start... ($i/30)"
         sleep 2
       done
+
+      # Change ownership of the volume to the clickhouse user
+      sudo chown -R clickhouse:clickhouse /mnt/HC_Volume_101756196
     permissions: "0755"
 
   - path: /etc/clickhouse-server/config.d/networking.xml
@@ -140,8 +143,8 @@ write_files:
               <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
           </logger>
           
-          <path>/var/lib/clickhouse/</path>
-          <tmp_path>/var/lib/clickhouse/tmp/</tmp_path>
+          <path>/mnt/HC_Volume_101756196/</path>
+          <tmp_path>/mnt/HC_Volume_101756196/tmp/</tmp_path>
           <user_files_path>/var/lib/clickhouse/user_files/</user_files_path>
           <users_config>users.xml</users_config>
           <default_profile>default</default_profile>
@@ -193,3 +196,4 @@ runcmd:
   - sudo systemctl start clickhouse-server
   - sleep 10
   - sudo reboot
+# /mnt/HC_Volume_101756196

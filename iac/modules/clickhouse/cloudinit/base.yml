@@ -30,6 +30,7 @@ users:
       - sudo
     sudo:
       - ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
     ssh_import_id:
       - gh:poberherr
     uid: 1001
@@ -39,6 +40,7 @@ users:
       - sudo
     sudo:
       - ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
     ssh_import_id:
       - gh:fugufisch
     uid: 1002
