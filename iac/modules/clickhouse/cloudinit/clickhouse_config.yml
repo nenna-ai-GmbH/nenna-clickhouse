@@ -1,3 +1,4 @@
+#cloud-config
 write_files:
   - path: /etc/clickhouse-server/config.d/networking.xml
     content: |

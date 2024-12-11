@@ -65,7 +65,7 @@ write_files:
 runcmd:
   - netplan apply
   - sed -i '/PermitRootLogin/d' /etc/ssh/sshd_config
-  - echo "PermitRootLogin no" >> /etc/ssh/sshd_config
+  - bash -c 'echo "PermitRootLogin no" >> /etc/ssh/sshd_config'
   - systemctl restart sshd
   - snap install btop
   - reboot

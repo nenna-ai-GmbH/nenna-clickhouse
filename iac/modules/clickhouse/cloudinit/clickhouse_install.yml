@@ -1,108 +1,54 @@
+#cloud-config
 write_files:
-  - path: /run/scripts/install-clickhouse.sh
-    content: |
-      # First, install expect
-      sudo apt-get update && sudo apt-get install -y expect
-
-      LATEST_VERSION=$(curl -s https://raw.githubusercontent.com/ClickHouse/ClickHouse/master/utils/list-versions/version_date.tsv | \
-          grep -Eo '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | sort -V -r | head -n 1)
-      export LATEST_VERSION
-
-      case $(uname -m) in
-        x86_64) ARCH=amd64 ;;
-        aarch64) ARCH=arm64 ;;
-        *) echo "Unknown architecture $(uname -m)"; exit 1 ;;
-      esac
-
-      for PKG in clickhouse-common-static clickhouse-common-static-dbg clickhouse-server clickhouse-client clickhouse-keeper
-      do
-        curl -fO "https://packages.clickhouse.com/tgz/stable/$PKG-$LATEST_VERSION-${ARCH}.tgz" \
-          || curl -fO "https://packages.clickhouse.com/tgz/stable/$PKG-$LATEST_VERSION.tgz"
-      done
-
-      tar -xzvf "clickhouse-common-static-$LATEST_VERSION-${ARCH}.tgz" \
-        || tar -xzvf "clickhouse-common-static-$LATEST_VERSION.tgz"
-      sudo "clickhouse-common-static-$LATEST_VERSION/install/doinst.sh"
-
-      tar -xzvf "clickhouse-common-static-dbg-$LATEST_VERSION-${ARCH}.tgz" \
-        || tar -xzvf "clickhouse-common-static-dbg-$LATEST_VERSION.tgz"
-      sudo "clickhouse-common-static-dbg-$LATEST_VERSION/install/doinst.sh"
-
-      tar -xzvf "clickhouse-server-$LATEST_VERSION-${ARCH}.tgz" \
-        || tar -xzvf "clickhouse-server-$LATEST_VERSION.tgz"
-
-      # Create expect script
-      cat > install_with_password.exp << EOF
-      #!/usr/bin/expect -f
-      set timeout -1
-      spawn sudo "clickhouse-server-$LATEST_VERSION/install/doinst.sh" configure
-      expect "Enter password for the default user:"
-      send "${clickhouse_password}\r"
-      expect eof
-      EOF
-
-      chmod +x install_with_password.exp
-      ./install_with_password.exp
-
-      tar -xzvf "clickhouse-client-$LATEST_VERSION-${ARCH}.tgz" \
-        || tar -xzvf "clickhouse-client-$LATEST_VERSION.tgz"
-      sudo "clickhouse-client-$LATEST_VERSION/install/doinst.sh"
-    permissions: "0755"
-
   - path: /run/scripts/configure-folder-clickhouse.sh
     content: |
       #!/bin/bash
-      sudo mkdir -p /var/lib/clickhouse
-      sudo mkdir -p /var/log/clickhouse-server
-      sudo mkdir -p /etc/clickhouse-server
-      sudo chown -R clickhouse:clickhouse /var/lib/clickhouse
-      sudo chown -R clickhouse:clickhouse /var/log/clickhouse-server
-      sudo chown -R clickhouse:clickhouse /etc/clickhouse-server
-      sudo chmod 750 /var/lib/clickhouse
-      sudo chmod 750 /var/log/clickhouse-server
-      sudo chmod 750 /etc/clickhouse-server
-      sudo usermod -a -G clickhouse kamal
-      newgrp clickhouse
+      set -eu
+
+      # Ensure clickhouse user exists first
+      if ! id -u clickhouse >/dev/null 2>&1; then
+          useradd -r -s /bin/false clickhouse
+      fi
+
+      mkdir -p /var/lib/clickhouse
+      mkdir -p /var/log/clickhouse-server
+      mkdir -p /etc/clickhouse-server
+      chown -R clickhouse:clickhouse /var/lib/clickhouse
+      chown -R clickhouse:clickhouse /var/log/clickhouse-server
+      chown -R clickhouse:clickhouse /etc/clickhouse-server
+      chmod 750 /var/lib/clickhouse
+      chmod 750 /var/log/clickhouse-server
+      chmod 750 /etc/clickhouse-server
+      usermod -a -G clickhouse kamal
     permissions: "0755"
 
   - path: /run/scripts/init-clickhouse.sh
     content: |
       #!/bin/bash
-      set -e
-
-      # Ensure clickhouse user exists
-      if ! id -u clickhouse >/dev/null 2>&1; then
-          useradd -r -s /bin/false clickhouse
-      fi
+      set -eu
 
       # Create required directories
-      mkdir -p /var/lib/clickhouse
-      mkdir -p /var/log/clickhouse-server
       mkdir -p /var/lib/clickhouse/tmp
       mkdir -p /var/lib/clickhouse/user_files
       mkdir -p /var/lib/clickhouse/format_schemas
 
-      # Set proper ownership
-      chown -R clickhouse:clickhouse /var/lib/clickhouse
-      chown -R clickhouse:clickhouse /var/log/clickhouse-server
-      chown -R clickhouse:clickhouse /etc/clickhouse-server
-
-      # Set proper permissions
-      chmod 750 /var/lib/clickhouse
-      chmod 750 /var/log/clickhouse-server
-      chmod 750 /etc/clickhouse-server
-
-      # Ensure log file exists and has proper permissions
+      # Ensure log files exist with proper permissions
       touch /var/log/clickhouse-server/clickhouse-server.log
       touch /var/log/clickhouse-server/clickhouse-server.err.log
       chown clickhouse:clickhouse /var/log/clickhouse-server/clickhouse-server.log
       chown clickhouse:clickhouse /var/log/clickhouse-server/clickhouse-server.err.log
 
-      # Change ownership of the volume to the clickhouse user
-      sudo chown -R clickhouse:clickhouse /mnt/HC_Volume_101756196
+      # Set up volume permissions if it exists
+      if [ -d "/mnt/HC_Volume_101756196" ]; then
+        chown -R clickhouse:clickhouse /mnt/HC_Volume_101756196
+      fi
     permissions: "0755"
 
 runcmd:
-  - [sh, "/run/scripts/install-clickhouse.sh"]
-  - [sh, "/run/scripts/configure-folder-clickhouse.sh"]
-  - [sh, "/run/scripts/init-clickhouse.sh"]
+  - apt-get install -y apt-transport-https ca-certificates dirmngr
+  - GNUPGHOME=$(mktemp -d) && gpg --no-default-keyring --keyring /usr/share/keyrings/clickhouse-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8919F6BD2B48D754 && rm -r "$GNUPGHOME"
+  - echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main" | tee /etc/apt/sources.list.d/clickhouse.list
+  - apt-get update
+  - apt-get install -y clickhouse-server clickhouse-client
+  - bash /run/scripts/configure-folder-clickhouse.sh
+  - bash /run/scripts/init-clickhouse.sh
