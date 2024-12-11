@@ -1,0 +1,3 @@
+runcmd:
+  - sudo systemctl enable clickhouse-server
+  - sudo systemctl start clickhouse-server

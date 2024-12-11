@@ -44,14 +44,12 @@ write_files:
       chmod +x install_with_password.exp
       ./install_with_password.exp
 
-      sudo /etc/init.d/clickhouse-server start
-
       tar -xzvf "clickhouse-client-$LATEST_VERSION-${ARCH}.tgz" \
         || tar -xzvf "clickhouse-client-$LATEST_VERSION.tgz"
       sudo "clickhouse-client-$LATEST_VERSION/install/doinst.sh"
     permissions: "0755"
 
-  - path: /run/scripts/configure-clickhouse.sh
+  - path: /run/scripts/configure-folder-clickhouse.sh
     content: |
       #!/bin/bash
       sudo mkdir -p /var/lib/clickhouse
@@ -100,100 +98,11 @@ write_files:
       chown clickhouse:clickhouse /var/log/clickhouse-server/clickhouse-server.log
       chown clickhouse:clickhouse /var/log/clickhouse-server/clickhouse-server.err.log
 
-      # Restart service
-      systemctl restart clickhouse-server
-
-      # Wait for service to be ready
-      for i in {1..30}; do
-        if clickhouse-client --host 127.0.0.1 --query "SELECT 1" >/dev/null 2>&1; then
-          echo "ClickHouse is ready"
-          exit 0
-        fi
-        echo "Waiting for ClickHouse to start... ($i/30)"
-        sleep 2
-      done
-
       # Change ownership of the volume to the clickhouse user
       sudo chown -R clickhouse:clickhouse /mnt/HC_Volume_101756196
     permissions: "0755"
 
-  - path: /etc/clickhouse-server/config.d/networking.xml
-    content: |
-      <?xml version="1.0"?>
-      <clickhouse>
-          <network>
-              <listen_host>::</listen_host>
-              <listen_host>0.0.0.0</listen_host>
-              <listen_try>1</listen_try>
-              <max_connections>4096</max_connections>
-              <keep_alive_timeout>3</keep_alive_timeout>
-              <tcp_port>9000</tcp_port>
-              <http_port>8123</http_port>
-          </network>
-      </clickhouse>
-    permissions: "0644"
-
-  - path: /etc/clickhouse-server/config.xml
-    content: |
-      <?xml version="1.0"?>
-      <clickhouse>
-          <logger>
-              <level>trace</level>
-              <log>/var/log/clickhouse-server/clickhouse-server.log</log>
-              <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
-          </logger>
-          
-          <path>/mnt/HC_Volume_101756196/</path>
-          <tmp_path>/mnt/HC_Volume_101756196/tmp/</tmp_path>
-          <user_files_path>/var/lib/clickhouse/user_files/</user_files_path>
-          <users_config>users.xml</users_config>
-          <default_profile>default</default_profile>
-          <default_database>default</default_database>
-      </clickhouse>
-    permissions: "0644"
-
-  - path: /etc/clickhouse-server/users.xml
-    content: |
-      <?xml version="1.0"?>
-      <clickhouse>
-          <users>
-              <default>
-                  <password></password>
-                  <networks>
-                      <ip>::/0</ip>
-                  </networks>
-                  <profile>default</profile>
-                  <quota>default</quota>
-              </default>
-          </users>
-          <profiles>
-              <default>
-                  <max_memory_usage>10000000000</max_memory_usage>
-                  <use_uncompressed_cache>0</use_uncompressed_cache>
-                  <load_balancing>random</load_balancing>
-              </default>
-          </profiles>
-          <quotas>
-              <default>
-                  <interval>
-                      <duration>3600</duration>
-                      <queries>0</queries>
-                      <errors>0</errors>
-                      <result_rows>0</result_rows>
-                      <read_rows>0</read_rows>
-                      <execution_time>0</execution_time>
-                  </interval>
-              </default>
-          </quotas>
-      </clickhouse>
-    permissions: "0644"
-
 runcmd:
   - [sh, "/run/scripts/install-clickhouse.sh"]
-  - [sh, "/run/scripts/configure-clickhouse.sh"]
+  - [sh, "/run/scripts/configure-folder-clickhouse.sh"]
   - [sh, "/run/scripts/init-clickhouse.sh"]
-  - sudo systemctl enable clickhouse-server
-  - sudo systemctl start clickhouse-server
-  - sleep 10
-  - sudo reboot
-# /mnt/HC_Volume_101756196
