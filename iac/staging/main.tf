@@ -11,3 +11,16 @@ module "clickhouse" {
   operating_system = var.operating_system
   region = var.region
 }
+
+resource "hcloud_volume" "clickhouse_data" {
+  name      = "clickhouse-data"
+  size      = 10
+  format    = "ext4"
+  location  = var.region
+}
+
+resource "hcloud_volume_attachment" "main" {
+  volume_id = hcloud_volume.clickhouse_data.id
+  server_id = module.clickhouse.server_id
+  automount = true
+}
