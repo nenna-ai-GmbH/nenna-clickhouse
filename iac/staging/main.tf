@@ -10,6 +10,7 @@ module "clickhouse" {
   server_count = var.server_count
   operating_system = var.operating_system
   region = var.region
+  volume_mount_path = "/mnt/HC_Volume_101756196"
 }
 
 resource "hcloud_volume" "clickhouse_data" {
@@ -23,4 +24,8 @@ resource "hcloud_volume_attachment" "main" {
   volume_id = hcloud_volume.clickhouse_data.id
   server_id = module.clickhouse.server_id
   automount = true
+}
+
+output "volume_mount_path" {
+  value = "/mnt/HC_Volume_${hcloud_volume.clickhouse_data.id}"
 }

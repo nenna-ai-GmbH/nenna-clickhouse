@@ -39,8 +39,11 @@ data "cloudinit_config" "cloud_config_clickhouse" {
 
   part {
     content_type = "text/cloud-config"
-    content      = file("${path.module}/cloudinit/base.yml")
+    content      = templatefile("${path.module}/cloudinit/base.yml.tftpl", {
+      volume_mount_path = var.volume_mount_path
+    })
   }
+
 
   part {
     content_type = "text/cloud-config"
