@@ -1,0 +1,115 @@
+package_update: true
+package_upgrade: true
+
+timezone: Europe/Berlin
+
+manage_etc_hosts: true
+
+packages:
+  - docker.io
+  - curl
+  - git
+  - snapd
+
+users:
+  - default
+  - name: kamal
+    groups:
+      - sudo
+    sudo:
+      - ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDJTAtW/vMMbk/gqRCUXGmAlPoRANCMGiuXWb0LhMlfW
+    ssh_import_id:
+      - gh:fugufisch
+      - gh:poberherr
+      - gh:derHahn
+    uid: 1000
+
+  - name: patrick
+    groups:
+      - sudo
+    sudo:
+      - ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_import_id:
+      - gh:poberherr
+    uid: 1001
+
+  - name: max
+    groups:
+      - sudo
+    sudo:
+      - ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_import_id:
+      - gh:fugufisch
+    uid: 1002
+
+  - name: jens
+    groups:
+      - sudo
+    sudo:
+      - ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_import_id:
+      - gh:derHahn
+    uid: 1003
+
+write_files:
+  - path: /etc/netplan/01-netplan.yaml
+    content: |
+      network:
+        version: 2
+        ethernets:
+          eth0:
+            nameservers:
+              addresses:
+                - 1.1.1.1
+                - 1.0.0.1
+    permissions: "0600"
+
+  - path: /var/log/cloud-init-custom.log
+    content: ""
+    permissions: "0644"
+    owner: root:root
+
+runcmd:
+  # Basic system setup with logging
+  - echo "Starting basic system setup" >> /var/log/cloud-init-custom.log
+  - netplan apply
+  - sed -i '/PermitRootLogin/d' /etc/ssh/sshd_config
+  - echo "PermitRootLogin no" >> /etc/ssh/sshd_config
+  - systemctl restart sshd
+  - usermod -aG docker kamal
+  - docker network create nenna_cloud-network || echo "Docker network creation failed" >> /var/log/cloud-init-custom.log
+  - snap install btop
+  - echo "Basic system setup completed" >> /var/log/cloud-init-custom.log
+
+  # Volume setup with logging
+  - echo "Starting volume setup" >> /var/log/cloud-init-custom.log
+  - mkdir -p ${volume_mount_path}/clickhouse || echo "Failed to create clickhouse directory" >> /var/log/cloud-init-custom.log
+  - chmod 755 ${volume_mount_path} || echo "Failed to chmod volume path" >> /var/log/cloud-init-custom.log
+  - chmod 700 ${volume_mount_path}/clickhouse || echo "Failed to chmod clickhouse directory" >> /var/log/cloud-init-custom.log
+  - echo "Volume setup completed" >> /var/log/cloud-init-custom.log
+
+  # ClickHouse installation with logging
+  - echo "Starting ClickHouse prerequisites installation" >> /var/log/cloud-init-custom.log
+  - apt-get update || echo "apt-get update failed" >> /var/log/cloud-init-custom.log
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y apt-transport-https ca-certificates dirmngr || echo "Failed to install prerequisites" >> /var/log/cloud-init-custom.log
+
+  # Repository setup with logging
+  - echo "Adding ClickHouse repository" >> /var/log/cloud-init-custom.log
+  - apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv E0C56BD4 || echo "Failed to add repository key" >> /var/log/cloud-init-custom.log
+  - echo "deb https://packages.clickhouse.com/deb stable main" | tee /etc/apt/sources.list.d/clickhouse.list
+
+  # ClickHouse installation with logging
+  - echo "Installing ClickHouse" >> /var/log/cloud-init-custom.log
+  - apt-get update || echo "Second apt-get update failed" >> /var/log/cloud-init-custom.log
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y clickhouse-server clickhouse-client || echo "ClickHouse installation failed" >> /var/log/cloud-init-custom.log
+
+  # Final setup with logging
+  - echo "Setting final permissions" >> /var/log/cloud-init-custom.log
+  - chown -R clickhouse:clickhouse ${volume_mount_path}/clickhouse || echo "Failed to set clickhouse permissions" >> /var/log/cloud-init-custom.log
+  - echo "Base configuration completed" >> /var/log/cloud-init-custom.log

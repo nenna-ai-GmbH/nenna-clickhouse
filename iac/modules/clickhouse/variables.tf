@@ -31,3 +31,7 @@ variable "clickhouse_password" {
   type    = string
   default = ""
 }
+
+variable "volume_mount_path" {
+  type    = string
+}

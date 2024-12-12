@@ -31,4 +31,5 @@ variable "clickhouse_password" {
   description = "Password for ClickHouse default user"
   type        = string
   sensitive   = true  # This marks the variable as sensitive in logs
+  default     = ""
 }

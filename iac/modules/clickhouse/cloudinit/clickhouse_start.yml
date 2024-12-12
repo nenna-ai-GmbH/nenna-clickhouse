@@ -1,0 +1,4 @@
+#cloud-config
+runcmd:
+  - systemctl enable clickhouse-server
+  - systemctl start clickhouse-server
