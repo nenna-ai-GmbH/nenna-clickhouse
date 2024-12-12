@@ -44,6 +44,11 @@ data "cloudinit_config" "cloud_config_clickhouse" {
 
   part {
     content_type = "text/cloud-config"
-    content      = file("${path.module}/cloudinit/clickhouse.yml")
+    content      = file("${path.module}/cloudinit/clickhouse_prepare_install.yml")
+  }
+
+  part {
+    content_type = "text/cloud-config"
+    content      = file("${path.module}/cloudinit/clickhouse_install.yml")
   }
 }

@@ -1,0 +1,42 @@
+#cloud-config
+write_files:
+  - path: /run/scripts/configure-folder-clickhouse.sh
+    content: |
+      #!/bin/bash
+      set -eu
+      # Ensure clickhouse user exists first
+      if ! id -u clickhouse >/dev/null 2>&1; then
+          useradd -r -s /bin/false clickhouse
+      fi
+      mkdir -p /var/lib/clickhouse
+      mkdir -p /var/log/clickhouse-server
+      mkdir -p /etc/clickhouse-server
+      chown -R clickhouse:clickhouse /var/lib/clickhouse
+      chown -R clickhouse:clickhouse /var/log/clickhouse-server
+      chown -R clickhouse:clickhouse /etc/clickhouse-server
+      chmod 750 /var/lib/clickhouse
+      chmod 750 /var/log/clickhouse-server
+      chmod 750 /etc/clickhouse-server
+      usermod -a -G clickhouse kamal
+    permissions: "0755"
+  - path: /run/scripts/init-clickhouse.sh
+    content: |
+      #!/bin/bash
+      set -eu
+      # Create required directories
+      mkdir -p /var/lib/clickhouse/tmp
+      mkdir -p /var/lib/clickhouse/user_files
+      mkdir -p /var/lib/clickhouse/format_schemas
+      # Ensure log files exist with proper permissions
+      touch /var/log/clickhouse-server/clickhouse-server.log
+      touch /var/log/clickhouse-server/clickhouse-server.err.log
+      chown clickhouse:clickhouse /var/log/clickhouse-server/clickhouse-server.log
+      chown clickhouse:clickhouse /var/log/clickhouse-server/clickhouse-server.err.log
+      # Set up volume permissions if it exists
+      if [ -d "/mnt/HC_Volume_101756196" ]; then
+        chown -R clickhouse:clickhouse /mnt/HC_Volume_101756196
+      fi
+    permissions: "0755"
+runcmd:
+  - bash /run/scripts/configure-folder-clickhouse.sh
+  - bash /run/scripts/init-clickhouse.sh
