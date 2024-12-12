@@ -1,3 +1,4 @@
+#cloud-config
 write_files:
   - path: /run/scripts/install-clickhouse.sh
     content: |
