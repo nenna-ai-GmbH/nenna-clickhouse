@@ -13,24 +13,12 @@ packages:
 
 users:
   - default
-  - name: kamal
-    groups:
-      - sudo
-      - docker
-    sudo:
-      - ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
-    ssh_import_id:
-      - gh:fugufisch
-      - gh:poberherr
-    uid: 1000
 
   - name: patrick
     groups:
       - sudo
     sudo:
       - ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
     ssh_import_id:
       - gh:poberherr
     uid: 1001
@@ -40,10 +28,18 @@ users:
       - sudo
     sudo:
       - ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
     ssh_import_id:
       - gh:fugufisch
     uid: 1002
+
+  - name: jens
+    groups:
+      - sudo
+    sudo:
+      - ALL=(ALL) NOPASSWD:ALL
+    ssh_import_id:
+      - gh:derHahn
+    uid: 1003
 
 write_files:
   - path: /etc/netplan/01-netplan.yaml
@@ -57,10 +53,6 @@ write_files:
                 - 1.1.1.1
                 - 1.0.0.1
     permissions: "0600"
-  - path: /etc/sudoers.d/systemctl
-    content: |
-      %sudo ALL=(kamal) NOPASSWD: /bin/systemctl
-    permissions: "0440"
 
 runcmd:
   - netplan apply

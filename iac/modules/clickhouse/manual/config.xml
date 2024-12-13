@@ -1,0 +1,18 @@
+<clickhouse>
+    <logger>
+        <level>trace</level>
+        <log>/var/log/clickhouse-server/clickhouse-server.log</log>
+        <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
+    </logger>
+    <path>/mnt/HC_Volume_101756196/</path>
+    <tmp_path>/mnt/HC_Volume_101756196/tmp/</tmp_path>
+    <user_files_path>/var/lib/clickhouse/user_files/</user_files_path>
+    <users_config>users.xml</users_config>
+    <default_profile>default</default_profile>
+    <default_database>default</default_database>
+    <user_directories>
+        <local_directory>
+            <path>/mnt/HC_Volume_101756196/access/</path>
+        </local_directory>
+    </user_directories>
+</clickhouse>
