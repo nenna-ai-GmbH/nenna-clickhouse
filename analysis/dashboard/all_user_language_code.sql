@@ -1,15 +1,18 @@
 SELECT 
-    toDate(timestamp) as date,
+    toStartOfWeek(timestamp) as week,
     organization_id,
-    count(*) as event_count,
+    user_input_language_code,
+    count(DISTINCT user_id) as unique_users,
     toDate(now() - INTERVAL 4 WEEK) as query_start_date,
     toDate(now()) as query_end_date
 FROM event_masking
 WHERE timestamp >= now() - INTERVAL 4 WEEK
   AND timestamp <= now()
 GROUP BY 
-    toDate(timestamp),
-    organization_id
+    toStartOfWeek(timestamp),
+    organization_id,
+    user_input_language_code
 ORDER BY 
-    date DESC,
-    organization_id;
+    week DESC,
+    organization_id,
+    user_input_language_code;
