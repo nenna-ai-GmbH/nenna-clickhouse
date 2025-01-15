@@ -161,7 +161,7 @@ def generate_event_data():
 
 def create_table_if_not_exists():
     try:
-        with open('tables/event_mastking.sql', 'r') as f:
+        with open('../tables/event_mastking.sql', 'r') as f:
             create_table_query = f.read()
         clickhouse_client.command(create_table_query)
         print("Table 'event_masking' created or already exists.")
