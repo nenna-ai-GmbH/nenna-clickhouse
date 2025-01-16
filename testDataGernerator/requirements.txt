@@ -1,0 +1,4 @@
+boto3
+pydantic
+clickhouse-connect
+typing-extensions 
