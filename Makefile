@@ -56,3 +56,6 @@ setup-test-env: ## Setup Python environment for test data generation
 
 test-data: check-clickhouse setup-test-env ## Generate test data
 	@cd testDataGernerator && pipenv run python main.py
+
+stop: ## Stop all containers
+	docker compose down
