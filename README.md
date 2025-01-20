@@ -42,6 +42,24 @@ The generator will create 25,000 sample events with realistic distributions of:
 - Language codes (weighted towards EN and DE)
 - Event triggers (weighted towards masking events)
 
+### Server maintaintance
+
+Apparently occasionally the server needs to be cleaned out to clear out the disk space.
+
+Go to the clickhouse and execute the following commands:
+
+```bash
+TRUNCATE TABLE system.text_log;
+TRUNCATE TABLE system.metric_log;
+TRUNCATE TABLE system.asynchronous_metric_log;
+TRUNCATE TABLE system.trace_log;
+TRUNCATE TABLE system.processors_profile_log;
+TRUNCATE TABLE system.query_log;
+TRUNCATE TABLE system.error_log;
+TRUNCATE TABLE system.part_log;
+
+```
+
 ### Requirements
 
 - Python 3.x
