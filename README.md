@@ -46,6 +46,21 @@ The generator will create 25,000 sample events with realistic distributions of:
 
 Apparently occasionally the server needs to be cleaned out to clear out the disk space.
 
+Check the disk space:
+
+```sql
+SELECT
+    table,
+    formatReadableQuantity(sum(rows)) AS total_rows,
+    formatReadableSize(sum(data_compressed_bytes)) AS compressed_size,
+    formatReadableSize(sum(data_uncompressed_bytes)) AS uncompressed_size,
+    round(sum(data_uncompressed_bytes) / sum(data_compressed_bytes), 2) AS ratio
+FROM system.parts
+WHERE active
+GROUP BY table
+ORDER BY sum(data_compressed_bytes) DESC
+```
+
 Go to the clickhouse and modify the system tables to have a TTL of 10 days.
 See `tables/system_tables.sql` for the commands.
 
