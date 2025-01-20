@@ -46,19 +46,8 @@ The generator will create 25,000 sample events with realistic distributions of:
 
 Apparently occasionally the server needs to be cleaned out to clear out the disk space.
 
-Go to the clickhouse and execute the following commands:
-
-```bash
-TRUNCATE TABLE system.text_log;
-TRUNCATE TABLE system.metric_log;
-TRUNCATE TABLE system.asynchronous_metric_log;
-TRUNCATE TABLE system.trace_log;
-TRUNCATE TABLE system.processors_profile_log;
-TRUNCATE TABLE system.query_log;
-TRUNCATE TABLE system.error_log;
-TRUNCATE TABLE system.part_log;
-
-```
+Go to the clickhouse and modify the system tables to have a TTL of 10 days.
+See `tables/system_tables.sql` for the commands.
 
 ### Requirements
 
